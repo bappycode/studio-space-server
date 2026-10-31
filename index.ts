@@ -106,6 +106,10 @@ app.delete('/my-bookings/:id', async (req, res) => {
   res.send(result)
 })
 
-app.listen(port, () => {
-    console.log(`This Server Is Running On Port: ${port}`)
-})
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`This Server Is Running On Port: ${port}`)
+    })
+}
+
+export default app;
