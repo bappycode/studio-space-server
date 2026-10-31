@@ -24,9 +24,10 @@ export async function connectToMongoDB() {
 const mongoClient = await connectToMongoDB();
 const db = mongoClient.db('studio-space');
 const studiosCollection = db.collection('studios');
+const myStudiosBookingCollection = db.collection('my-bookings')
 
 app.get('/', (req, res) => {
-    res.send('Hello World')
+    res.send({message: "Server Is Runing"})
 })
 
 app.get('/studios', async (req, res) => {
@@ -36,10 +37,74 @@ app.get('/studios', async (req, res) => {
 
 app.get('/studios/:id', async (req, res) => {
     const {id} = req.params
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ message: 'Invalid id' })
+    }
     const result = await  studiosCollection.findOne({_id:new ObjectId(id)})
     res.send(result)
 })
 
+app.get('/studios/category/:category', async (req, res)=> {
+  const { category } = req.params
+  const result = await studiosCollection.find({category}).toArray()
+  res.send(result)
+})
+
+app.patch('/studios/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ message: 'Invalid id' })
+  }
+
+const { ownerEmail, title, category, hourlyRate, securityDeposit, maxCapacity,
+          location, image, gallery, amenities, overview } = req.body
+
+  const result = await studiosCollection.updateOne(
+    { _id: new ObjectId(id), ownerEmail },
+    { $set: { ownerEmail, title, category, hourlyRate, securityDeposit, maxCapacity,
+          location, image, gallery, amenities, overview } }
+  );
+  if (result.matchedCount === 0) {
+    return res.status(403).send({ message: 'Studio not found or you are not the owner' })
+  }
+  res.send(result)
+});
+
+app.post('/add-studios', async (req, res) => {
+  const data = req.body
+  const result = await studiosCollection.insertOne(data)
+  res.send(result)
+})
+
+app.post('/my-bookings', async(req, res) => {
+  const data = req.body
+  const result = await myStudiosBookingCollection.insertOne(data)
+  res.send(result)
+})
+
+app.get('/my-bookings/:email', async (req, res) => {
+  const { email } = req.params
+  const result = await myStudiosBookingCollection.find({email: email}).toArray()
+  res.send(result)
+})
+
+app.delete('/my-bookings/:id', async (req, res) => {
+  const { id } = req.params;
+  const email = req.query.email as string
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ message: 'Invalid id' })
+  }
+  if (!email) {
+    return res.status(400).send({ message: 'Email is required' })
+  }
+
+
+  const result = await myStudiosBookingCollection.deleteOne({ _id: new ObjectId(id), email })
+  if (result.deletedCount === 0) {
+    return res.status(403).send({ message: 'Booking not found or not yours' })
+  }
+  res.send(result)
+})
 
 app.listen(port, () => {
     console.log(`This Server Is Running On Port: ${port}`)
