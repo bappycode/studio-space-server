@@ -21,8 +21,8 @@ export async function connectToMongoDB() {
   }
 }
 
-const mongoClient = await connectToMongoDB();
-const db = mongoClient.db('studio-space');
+await connectToMongoDB();
+const db = client.db('studio-space');
 const studiosCollection = db.collection('studios');
 const myStudiosBookingCollection = db.collection('my-bookings')
 
