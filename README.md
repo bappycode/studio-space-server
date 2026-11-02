@@ -11,6 +11,7 @@ The REST API behind StudioSpace, a peer-to-peer marketplace where hosts list cre
 - **Featured studios.** The 6 top-rated studios for the home page.
 - **Bookings.** Creators book a studio and get a Pending booking. Hosts confirm or cancel it, and the booking records who cancelled.
 - **Double-booking prevention.** A booking that overlaps a Pending or Confirmed slot for the same studio and date is rejected with 409 and a clear message.
+- **Wishlist.** Logged-in users save favourite studios and get them back as a list.
 - **JWT protection.** Private routes verify a Better Auth JWT against the client's JWKS and return 401 if it's missing or invalid. Ownership checks use the email from the token, never one sent by the client.
 
 ## API routes
@@ -33,6 +34,9 @@ The REST API behind StudioSpace, a peer-to-peer marketplace where hosts list cre
 | GET 🔒 | `/listing-bookings/:email` | Bookings on the user's studios |
 | PATCH 🔒 | `/my-bookings/:id/confirm` | Host confirms a Pending booking |
 | PATCH 🔒 | `/listing-bookings/:id/cancel` | Host cancels a Pending booking |
+| GET 🔒 | `/wishlist/:email` | The user's saved studios |
+| POST 🔒 | `/wishlist` | Save a studio |
+| DELETE 🔒 | `/wishlist/:studioId` | Remove a saved studio |
 
 ## Tech stack
 

@@ -25,6 +25,7 @@ await connectToMongoDB();
 const db = client.db('studio-space');
 const studiosCollection = db.collection('studios');
 const bookingsCollection = db.collection('my-bookings');
+const wishlistCollection = db.collection('wishlist');
 
 const JWKS = createRemoteJWKSet(new URL(process.env.JWT_Client_Token as string));
 
@@ -232,6 +233,36 @@ app.patch('/listing-bookings/:id/cancel', verifyApi, async (req, res) => {
         { _id: booking._id, status: 'Pending' },
         { $set: { status: 'Cancelled', cancelledBy: 'Owner' } }
     );
+    res.send(result);
+});
+
+app.get('/wishlist/:email', verifyApi, async (req, res) => {
+    const { email } = req.params;
+    if (res.locals.email !== email) {
+        return res.status(403).send({ message: 'Forbidden access' });
+    }
+    const saved = await wishlistCollection.find({ email }).toArray();
+    const studioIds = saved.map(item => new ObjectId(item.studioId as string));
+    const result = await studiosCollection.find({ _id: { $in: studioIds } }).toArray();
+    res.send(result);
+});
+
+app.post('/wishlist', verifyApi, async (req, res) => {
+    const { studioId } = req.body;
+    if (!ObjectId.isValid(studioId)) {
+        return res.status(400).send({ message: 'Invalid studio id' });
+    }
+    const result = await wishlistCollection.updateOne(
+        { email: res.locals.email, studioId },
+        { $setOnInsert: { createdAt: new Date() } },
+        { upsert: true }
+    );
+    res.send(result);
+});
+
+app.delete('/wishlist/:studioId', verifyApi, async (req, res) => {
+    const { studioId } = req.params;
+    const result = await wishlistCollection.deleteOne({ email: res.locals.email, studioId });
     res.send(result);
 });
 
